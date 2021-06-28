@@ -7,6 +7,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -33,6 +34,8 @@ public class SparkDemo {
 //        rdd1.saveAsObjectFile("hdfs://10.2.1.88:4007/test/countresult");
         // 数据集迭代
         JavaRDD<String> rdd1 = rdd.flatMap(line -> Arrays.asList(line.split("\\|")).iterator());
+        // 数据集元组转换
+        JavaRDD<String,String> rdd2 = rdd.flatMap(line -> Arrays.asList(line.split("\\|")).iterator()).mapToPair(d->new Tuple2<>(d.toString(),d));
         sc.stop();
 
     }
