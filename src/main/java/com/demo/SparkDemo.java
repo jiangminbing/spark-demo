@@ -9,6 +9,7 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author jiangmb
@@ -35,7 +36,27 @@ public class SparkDemo {
         // 数据集迭代
         JavaRDD<String> rdd1 = rdd.flatMap(line -> Arrays.asList(line.split("\\|")).iterator());
         // 数据集元组转换
-        JavaRDD<String,String> rdd2 = rdd.flatMap(line -> Arrays.asList(line.split("\\|")).iterator()).mapToPair(d->new Tuple2<>(d.toString(),d));
+        JavaPairRDD<Object, Object> rdd2 = rdd.flatMap(line -> Arrays.asList(line.split("\\|")).iterator())
+                .mapToPair(d->new Tuple2<>(d,d));
+        /**
+         * 现在有10个分区，共1000条数据，假设每个分区的数据=1000/10=100条，分别使用map和mapPartition遍历。
+         * (1)、使用map(func())遍历
+         * 现在，当我们将map（func）方法应用于rdd时，func（）操作将应用于每一行，在这种情况下，func（）操作将被调用1000次。即在一些时间关键的应用中会耗费时间。
+         *(2)、使用mapPartition(func())遍历
+         * 如果我们在rdd上调用mapPartition（func）方法，则func（）操作将在每个分区上而不是在每一行上调用。在这种特殊情况下，它将被称为10次（分区数）。通过这种方式，你可以在涉及时间关键的应用程序时阻止一些处理。\
+         */
+        JavaRDD<Integer> rdd3 = sc.parallelize(Arrays.asList(1,2,4));
+        JavaRDD<Integer> rdd4 = rdd3.mapPartitions(d->{
+          List<Integer> r = new ArrayList();
+          while (d.hasNext()) {
+              int i = d.next();
+              r.add(i * 2);
+          }
+          return r.iterator();
+        });
+
+
+
         sc.stop();
 
     }
